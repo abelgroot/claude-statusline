@@ -27,6 +27,15 @@ Layout adapts to terminal width. `MARGIN=4` near the bottom of the script contro
 - `full`: always draw it
 - `quiet`: never draw it (collect only)
 
+**Show/hide on demand** – `/status_bar` slash command (and `prefix + B` in tmux):
+```sh
+cp claude-code/toggle-statusbar.sh ~/.claude/toggle-statusbar.sh && chmod +x ~/.claude/toggle-statusbar.sh
+mkdir -p ~/.claude/commands && cp claude-code/commands/status_bar.md ~/.claude/commands/
+```
+Usage: `/status_bar` (toggle), `/status_bar on`, `off`, `auto`, `status`. It writes the mode to `~/.claude/.sl/bar-mode`
+(global for all sessions); the change shows on the next refresh, i.e. after your next message. `STATUSLINE_MODE` in the
+command still takes priority over this setting. Data collection for the tmux bar continues even when the bar is off.
+
 **Cost pill:** Claude Code's local estimate (tokens × API prices), not a bill. Shown only without plan limits (API billing), when a limit hits 100%, or with `STATUSLINE_SHOW_COST=1`.
 
 ## Part 2 – tmux integration (Catppuccin theme)

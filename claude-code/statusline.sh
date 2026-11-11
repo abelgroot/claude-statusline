@@ -45,7 +45,7 @@ fi
 #   STATUSLINE_MODE=full  -> always draw the bar below the prompt
 #   STATUSLINE_MODE=quiet -> never draw it (collect only)
 #   STATUSLINE_MODE=auto  -> default: draw it, except inside tmux (tmux bar shows the info instead)
-mode=${STATUSLINE_MODE:-auto}
+mode=${STATUSLINE_MODE:-$(cat "$HOME/.claude/.sl/bar-mode" 2>/dev/null)}; mode=${mode:-auto}   # env var > flag file (/status_bar) > auto
 if [ "$mode" = quiet ] || { [ "$mode" = auto ] && [ -n "$TMUX" ]; }; then exit 0; fi
 
 # Catppuccin Mocha (r;g;b)

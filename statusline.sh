@@ -134,7 +134,13 @@ build() {
   else
     [ "$L" -le 3 ] && right+=" $(pill "$SURF1" "$lab_s" "$(fg "$SUB")limits n/a yet")"
   fi
-  if [ -n "$cost" ]; then
+  # Cost is only an estimate. Show it when there are no plan limits (API billing), when a limit
+  # is used up (extra/credit usage takes over), or when forced with STATUSLINE_SHOW_COST=1.
+  show_cost=0
+  if [ -z "$h5" ] && [ -z "$d7" ]; then show_cost=1; fi
+  if [ "${h5%.*:-0}" -ge 100 ] 2>/dev/null || [ "${d7%.*:-0}" -ge 100 ] 2>/dev/null; then show_cost=1; fi
+  [ "${STATUSLINE_SHOW_COST:-0}" = 1 ] && show_cost=1
+  if [ -n "$cost" ] && [ "$show_cost" = 1 ]; then
     local ctxt
     if [ "$L" -ge 3 ]; then ctxt=$(printf '%.2f' "$cost"); else ctxt=$(printf '$%.2f' "$cost"); fi
     right+=" $(pill "$PEACH" "$lab_c" "$ctxt")"

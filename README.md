@@ -21,3 +21,8 @@ Add to `~/.claude/settings.json`:
 `tmux.conf` is my tmux config (Catppuccin Mocha, rounded windows). The tmux status bar sits at the top
 (`set -g status-position top`), above the Claude Code pane. Claude's status line and the tmux bar stay separate.
 Install: `cp tmux.conf ~/.tmux.conf` then `prefix + r` to reload (needs tpm + plugins).
+
+## Cost pill
+Cost is Claude Code's local estimate (tokens x API prices), not a bill. It is shown when no plan limits are
+reported (API billing), when the session or week limit hits 100% (extra/credit usage takes over), or always if
+`STATUSLINE_SHOW_COST=1` is set. Otherwise it is hidden on subscriptions.

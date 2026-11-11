@@ -55,10 +55,14 @@ Setup:
    (keep your other modules; `tmux/example-tmux.conf` is my full config for reference).
 4. Reload: `tmux source-file ~/.tmux.conf`.
 
-What you get: `✻ So5.5·M  S ████ 14%  W ████ 55%` on the right while the active pane runs Claude (`So5.5·M` = Sonnet 5.5, medium effort; `S` = 5-hour session, `W` = 7-day week), and window tabs named `✻ foldername`.
+What you get: `✻ So5.5·M  git:main  S ████ 14% 2h13m  W ████ 55% 2d7h` on the right while the active pane runs Claude (`So5.5·M` = Sonnet 5.5, medium effort; `S` = 5-hour session, `W` = 7-day week; the trailing time is the reset countdown), and window tabs named `✻ foldername`.
 
 **Why polling:** Claude Code can't be told to redraw its status line from outside (I tested SIGWINCH and tmux key presses: no effect), so `refreshInterval` is the only way for `/status_bar` or `prefix + B` to apply without sending a message. The script is built to make this nearly free: one `jq` call and an early exit when hidden (~25 ms per run). Remove `refreshInterval` if you prefer; toggles then apply after your next message.
 
 **Multiple sessions:** limits are account-wide, but each Claude session only knows the snapshot from its own last response. The script merges them into `~/.claude/.statusline-limits` (a reading wins only if it is for a newer window, or the same window with higher usage; empty readings never wipe data; writes are atomic), so the tmux pill doesn't flicker or drop to 0 when an older session refreshes.
+
+**Other tmux themes:** use `tmux/claude-plain.conf` instead of the Catppuccin snippet. The script reads its colors from `@claude_c_*` options, then Catppuccin's `@thm_*` palette, then built-in defaults, so it works anywhere.
+
+**Script options** (tmux user options, set in `~/.tmux.conf`): `@claude_branch on|off` (git branch, default on), `@claude_reset on|off` (reset countdowns, default on), `@claude_bar_width N` (default 4), `@claude_c_fg/_sub/_empty/_ok/_warn/_bad` (colors).
 
 **Polling:** tmux re-runs the script every `status-interval` seconds (5 by default, set in the snippet). The script only reads small cache files, so it is cheap. Data itself refreshes whenever Claude Code re-runs the status line (every `refreshInterval` seconds and after each response); expired windows are hidden automatically.

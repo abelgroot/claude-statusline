@@ -22,11 +22,10 @@ if [ -z "$effort" ] && [ -f "$HOME/.claude/settings.json" ]; then
 fi
 
 
-# Cache model/effort for the tmux bar (keyed by working dir, plus a global fallback)
+# Cache model/effort for the tmux bar (keyed by working dir)
 if [ -n "$model" ]; then
   mkdir -p "$HOME/.claude/.sl" 2>/dev/null
   mrec="$model|$effort"
-  printf '%s\n' "$mrec" > "$HOME/.claude/.sl/last" 2>/dev/null
   [ -n "$cwd" ] && printf '%s\n' "$mrec" > "$HOME/.claude/.sl/$(printf '%s' "$cwd" | cksum | cut -d' ' -f1)" 2>/dev/null
 fi
 
@@ -131,18 +130,24 @@ if [ -n "$cwd" ] && git -C "$cwd" rev-parse --git-dir >/dev/null 2>&1; then
   [ -n "$(git -C "$cwd" status --porcelain 2>/dev/null | head -1)" ] && dirty="*"
 fi
 
-# build <level>: 0 = full ... 6 = most compact
+# build <level>: 0 = full ... 6 = most compact, 7 = folder only (ultra narrow)
 build() {
   local L=$1 bw lab_s lab_w lab_c
   case $L in 0) bw=10;; 1) bw=8;; 2) bw=6;; 3) bw=4;; *) bw=0;; esac
   if [ "$L" -ge 3 ]; then lab_s="SES"; lab_w="WK"; lab_c='$'; else lab_s="SESSION"; lab_w="WEEK"; lab_c="COST"; fi
 
   local ltxt="$folder"
-  [ -n "$br" ] && ltxt+=" $(fg "$SUB")git:${br}${dirty}$(fg "$TEXT")"
+  [ -n "$br" ] && [ "$L" -le 6 ] && ltxt+=" $(fg "$SUB")git:${br}${dirty}$(fg "$TEXT")"
+  if [ "$L" -ge 7 ]; then   # ultra narrow: folder only, truncated to fit
+    local room=$(( cols - MARGIN - $(vis "$(pill "$BLUE" DIR "")") ))
+    [ "$room" -lt 3 ] && room=3
+    [ ${#folder} -gt "$room" ] && ltxt="${folder:0:$((room-1))}…"
+  fi
   left="$(pill "$BLUE" 'DIR' "$ltxt")"
   [ "$L" -le 1 ] && [ "$pname" != "$folder" ] && left+=" $(pill "$MAUVE" 'PROJECT' "$pname")"
 
   right=""
+  [ "$L" -ge 7 ] && return
   if [ -n "$model" ] && [ "$L" -le 4 ]; then
     local mtxt="$model"
     if [ -n "$effort" ]; then
@@ -182,7 +187,7 @@ MARGIN=4
 if [ "$cols" -le 0 ]; then
   build 0; printf '%s  %s\n' "$left" "$right"; exit 0
 fi
-for L in 0 1 2 3 4 5 6; do
+for L in 0 1 2 3 4 5 6 7; do
   build "$L"
   lw=$(vis "$left"); rw=$(vis "$right")
   [ $(( lw + rw + 1 + MARGIN )) -le "$cols" ] && break

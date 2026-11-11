@@ -56,8 +56,9 @@ tmux display -p -t %N '#{E:@catppuccin_window_text}'   # test window-name format
 Careful: tests that run the real script write the real caches (limits/model). Back up `~/.claude/.statusline-limits` first or expect a live session to overwrite it within seconds.
 
 ## Known limitations / ideas
-- Limits are only as fresh as the last Claude response; model/effort per window are matched by cwd (falls back to the last-updated session).
+- Limits are only as fresh as the last Claude response; model/effort are matched per working folder (no cross-session fallback: a new window shows no model until its first refresh, within `refreshInterval`).
 - The tmux pill shows only while the active pane runs Claude; other panes/sessions don't show it.
-- Very narrow terminals (< ~55 cols) can still overflow by a few columns.
+- Ultra narrow terminals: level 7 shows only a truncated folder; below ~25 columns it can still overflow.
 - `/status_bar` takes a model turn to print its one-line reply; `prefix + B` is instant (applies within refreshInterval seconds).
-- Ideas not done: reset countdown in the tmux pill, git branch in the tmux pill, support for other tmux themes.
+- Done since the first version: reset countdown + git branch in the tmux pill, theme-agnostic script (`@claude_*` options, `tmux/claude-plain.conf`), ultra-narrow level 7.
+- Ideas not done: dirty marker for the tmux branch (git status every 5 s may be slow in big repos), more themes with ready-made snippets, a per-pane (instead of per-folder) model cache.

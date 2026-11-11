@@ -21,6 +21,14 @@ h5r=$(j '.rate_limits.five_hour.resets_at')
 d7=$(j '.rate_limits.seven_day.used_percentage')
 d7r=$(j '.rate_limits.seven_day.resets_at')
 
+# Cache model/effort for the tmux bar (keyed by working dir, plus a global fallback)
+if [ -n "$model" ]; then
+  mkdir -p "$HOME/.claude/.sl" 2>/dev/null
+  mrec="$model|$effort"
+  printf '%s\n' "$mrec" > "$HOME/.claude/.sl/last" 2>/dev/null
+  [ -n "$cwd" ] && printf '%s\n' "$mrec" > "$HOME/.claude/.sl/$(printf '%s' "$cwd" | cksum | cut -d' ' -f1)" 2>/dev/null
+fi
+
 # Limits only arrive after the first API response. Cache them (account-wide) and
 # reuse at session start until fresh data shows up; drop windows that already reset.
 LCACHE="$HOME/.claude/.statusline-limits"
@@ -32,6 +40,13 @@ elif [ -f "$LCACHE" ]; then
   [ -n "$c5" ] && [ "${c5r:-0}" -gt "$now" ] && { h5=$c5; h5r=$c5r; }
   [ -n "$c7" ] && [ "${c7r:-0}" -gt "$now" ] && { d7=$c7; d7r=$c7r; }
 fi
+
+# Display mode (data above is always cached for the tmux bar):
+#   STATUSLINE_MODE=full  -> always draw the bar below the prompt
+#   STATUSLINE_MODE=quiet -> never draw it (collect only)
+#   STATUSLINE_MODE=auto  -> default: draw it, except inside tmux (tmux bar shows the info instead)
+mode=${STATUSLINE_MODE:-auto}
+if [ "$mode" = quiet ] || { [ "$mode" = auto ] && [ -n "$TMUX" ]; }; then exit 0; fi
 
 # Catppuccin Mocha (r;g;b)
 BASE="30;30;46"; SURF0="43;43;43"; SURF1="69;71;90"; TEXT="205;214;244"; SUB="166;173;200"
@@ -88,7 +103,7 @@ meter() { # pct resets_at mode(abs|time|none) barwidth countdown(1|0)
 # ---- terminal width ----
 cols=""
 [ -n "$TMUX" ] && cols=$(tmux display -p -t "${TMUX_PANE:-}" '#{pane_width}' 2>/dev/null)
-[ -z "$cols" ] && cols=$(stty size </dev/tty 2>/dev/null | awk '{print $2}')
+[ -z "$cols" ] && cols=$({ stty size </dev/tty; } 2>/dev/null | awk '{print $2}')
 [ -z "$cols" ] && cols=${COLUMNS:-0}
 [ -n "$SL_COLS" ] && cols=$SL_COLS   # test override
 vis() { printf '%s' "$1" | sed $'s/\x1b\\[[0-9;]*m//g' | LC_ALL=en_US.UTF-8 wc -m | tr -d ' '; }

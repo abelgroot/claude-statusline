@@ -30,17 +30,31 @@ if [ -n "$model" ]; then
   [ -n "$cwd" ] && printf '%s\n' "$mrec" > "$HOME/.claude/.sl/$(printf '%s' "$cwd" | cksum | cut -d' ' -f1)" 2>/dev/null
 fi
 
-# Limits only arrive after the first API response. Cache them (account-wide) and
-# reuse at session start until fresh data shows up; drop windows that already reset.
+# Usage limits are account-wide, but every Claude session only knows the snapshot from its OWN last
+# response (older sessions report stale or empty values). Merge them so the freshest data always wins:
+# a reading replaces the cache only if it is for a newer window, or the same window with >= usage.
+# Empty readings never wipe anything. Windows that already reset are dropped.
 LCACHE="$HOME/.claude/.statusline-limits"
 now=$(date +%s)
-if [ -n "$h5" ] || [ -n "$d7" ]; then
-  printf '%s|%s|%s|%s\n' "$h5" "$h5r" "$d7" "$d7r" > "$LCACHE" 2>/dev/null
-elif [ -f "$LCACHE" ]; then
-  IFS='|' read -r c5 c5r c7 c7r < "$LCACHE"
-  [ -n "$c5" ] && [ "${c5r:-0}" -gt "$now" ] && { h5=$c5; h5r=$c5r; }
-  [ -n "$c7" ] && [ "${c7r:-0}" -gt "$now" ] && { d7=$c7; d7r=$c7r; }
+c5=""; c5r=""; c7=""; c7r=""
+[ -f "$LCACHE" ] && IFS='|' read -r c5 c5r c7 c7r < "$LCACHE"
+fresher() { # in_pct in_reset cached_pct cached_reset -> success if incoming should replace cache
+  [ -n "$1" ] && [ -n "$2" ] || return 1
+  [ "$2" -gt "$now" ] 2>/dev/null || return 1
+  [ -n "$4" ] && [ "$4" -gt "$now" ] 2>/dev/null || return 0
+  [ "$2" -gt "$4" ] && return 0
+  [ "$2" -eq "$4" ] && [ "${1%.*}" -ge "${3%.*}" ] && return 0
+  return 1
+}
+changed=0
+fresher "$h5" "$h5r" "$c5" "$c5r" && { c5=$h5; c5r=$h5r; changed=1; }
+fresher "$d7" "$d7r" "$c7" "$c7r" && { c7=$d7; c7r=$d7r; changed=1; }
+if [ "$changed" = 1 ]; then
+  printf '%s|%s|%s|%s\n' "$c5" "$c5r" "$c7" "$c7r" > "$LCACHE.$$" 2>/dev/null && mv -f "$LCACHE.$$" "$LCACHE"
 fi
+h5=""; h5r=""; d7=""; d7r=""
+[ -n "$c5" ] && [ "${c5r:-0}" -gt "$now" ] && { h5=$c5; h5r=$c5r; }
+[ -n "$c7" ] && [ "${c7r:-0}" -gt "$now" ] && { d7=$c7; d7r=$c7r; }
 
 # Display mode (data above is always cached for the tmux bar):
 #   STATUSLINE_MODE=full  -> always draw the bar below the prompt

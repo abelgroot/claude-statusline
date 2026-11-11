@@ -18,7 +18,7 @@ cp claude-code/statusline.sh ~/.claude/statusline.sh && chmod +x ~/.claude/statu
 ```
 Add to `~/.claude/settings.json`:
 ```json
-"statusLine": { "type": "command", "command": "bash ~/.claude/statusline.sh", "padding": 0 }
+"statusLine": { "type": "command", "command": "bash ~/.claude/statusline.sh", "padding": 0, "refreshInterval": 5 }
 ```
 Layout adapts to terminal width. `MARGIN=4` near the bottom of the script controls the right edge.
 
@@ -33,7 +33,7 @@ cp claude-code/toggle-statusbar.sh ~/.claude/toggle-statusbar.sh && chmod +x ~/.
 mkdir -p ~/.claude/commands && cp claude-code/commands/status_bar.md ~/.claude/commands/
 ```
 Usage: `/status_bar` (toggle), `/status_bar on`, `off`, `auto`, `status`. It writes the mode to `~/.claude/.sl/bar-mode`
-(global for all sessions); the change shows on the next refresh, i.e. after your next message. `STATUSLINE_MODE` in the
+(global for all sessions); the change shows within `refreshInterval` seconds (5 with the setting above; without it, only after your next message). `STATUSLINE_MODE` in the
 command still takes priority over this setting. Data collection for the tmux bar continues even when the bar is off.
 
 **Cost pill:** Claude Code's local estimate (tokens × API prices), not a bill. Shown only without plan limits (API billing), when a limit hits 100%, or with `STATUSLINE_SHOW_COST=1`.
@@ -57,4 +57,4 @@ Setup:
 
 What you get: `✻ So5.5·M  S ████ 14%  W ████ 55%` on the right while the active pane runs Claude (`So5.5·M` = Sonnet 5.5, medium effort; `S` = 5-hour session, `W` = 7-day week), and window tabs named `✻ foldername`.
 
-**Polling:** tmux re-runs the script every `status-interval` seconds (5 by default, set in the snippet). The script only reads small cache files, so it is cheap. Data itself refreshes whenever Claude Code refreshes its status line (after each response); expired windows are hidden automatically.
+**Polling:** tmux re-runs the script every `status-interval` seconds (5 by default, set in the snippet). The script only reads small cache files, so it is cheap. Data itself refreshes whenever Claude Code re-runs the status line (every `refreshInterval` seconds and after each response); expired windows are hidden automatically.

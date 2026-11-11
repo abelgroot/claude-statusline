@@ -1,25 +1,26 @@
 #!/bin/bash
 # Claude Code status line, Catppuccin Mocha "rounded" pills (matches tmux theme)
 input=$(cat)
-j() { echo "$input" | jq -r "$1 // empty" 2>/dev/null; }
 
-cwd=$(j '.workspace.current_dir'); [ -z "$cwd" ] && cwd=$(j '.cwd')
-proj=$(j '.workspace.project_dir'); [ -z "$proj" ] && proj="$cwd"
-model=$(j '.model.display_name')
-mid=$(j '.model.id')
-cost=$(j '.cost.total_cost_usd')
-effort=$(j '.effort.level // .effort_level // .effortLevel')
+# One jq call for every field (fast: this script can run every few seconds)
+US=$'\x1f'
+IFS="$US" read -r cwd proj model mid cost effort ctx h5 h5r d7 d7r < <(
+  printf '%s' "$input" | jq -r '[
+    (.workspace.current_dir // .cwd // ""), (.workspace.project_dir // ""),
+    (.model.display_name // ""), (.model.id // ""), (.cost.total_cost_usd // ""),
+    (.effort.level // .effort_level // .effortLevel // ""),
+    (.context_window.used_percentage // ""),
+    (.rate_limits.five_hour.used_percentage // ""), (.rate_limits.five_hour.resets_at // ""),
+    (.rate_limits.seven_day.used_percentage // ""), (.rate_limits.seven_day.resets_at // "")
+  ] | map(tostring) | join("\u001f")' 2>/dev/null)
+[ -z "$proj" ] && proj="$cwd"
 if [ -z "$effort" ] && [ -f "$HOME/.claude/settings.json" ]; then
   effort=$(jq -r --arg id "$mid" '
     ((.modelSettings // {}) | to_entries
       | map(select(.key as $k | $id | startswith($k))) | sort_by(.key|length) | last | .value.effortLevel)
     // .effortLevel // empty' "$HOME/.claude/settings.json" 2>/dev/null)
 fi
-ctx=$(j '.context_window.used_percentage')
-h5=$(j '.rate_limits.five_hour.used_percentage')
-h5r=$(j '.rate_limits.five_hour.resets_at')
-d7=$(j '.rate_limits.seven_day.used_percentage')
-d7r=$(j '.rate_limits.seven_day.resets_at')
+
 
 # Cache model/effort for the tmux bar (keyed by working dir, plus a global fallback)
 if [ -n "$model" ]; then

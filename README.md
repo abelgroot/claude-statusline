@@ -57,4 +57,6 @@ Setup:
 
 What you get: `✻ So5.5·M  S ████ 14%  W ████ 55%` on the right while the active pane runs Claude (`So5.5·M` = Sonnet 5.5, medium effort; `S` = 5-hour session, `W` = 7-day week), and window tabs named `✻ foldername`.
 
+**Why polling:** Claude Code can't be told to redraw its status line from outside (I tested SIGWINCH and tmux key presses: no effect), so `refreshInterval` is the only way for `/status_bar` or `prefix + B` to apply without sending a message. The script is built to make this nearly free: one `jq` call and an early exit when hidden (~25 ms per run). Remove `refreshInterval` if you prefer; toggles then apply after your next message.
+
 **Polling:** tmux re-runs the script every `status-interval` seconds (5 by default, set in the snippet). The script only reads small cache files, so it is cheap. Data itself refreshes whenever Claude Code re-runs the status line (every `refreshInterval` seconds and after each response); expired windows are hidden automatically.

@@ -21,6 +21,18 @@ h5r=$(j '.rate_limits.five_hour.resets_at')
 d7=$(j '.rate_limits.seven_day.used_percentage')
 d7r=$(j '.rate_limits.seven_day.resets_at')
 
+# Limits only arrive after the first API response. Cache them (account-wide) and
+# reuse at session start until fresh data shows up; drop windows that already reset.
+LCACHE="$HOME/.claude/.statusline-limits"
+now=$(date +%s)
+if [ -n "$h5" ] || [ -n "$d7" ]; then
+  printf '%s|%s|%s|%s\n' "$h5" "$h5r" "$d7" "$d7r" > "$LCACHE" 2>/dev/null
+elif [ -f "$LCACHE" ]; then
+  IFS='|' read -r c5 c5r c7 c7r < "$LCACHE"
+  [ -n "$c5" ] && [ "${c5r:-0}" -gt "$now" ] && { h5=$c5; h5r=$c5r; }
+  [ -n "$c7" ] && [ "${c7r:-0}" -gt "$now" ] && { d7=$c7; d7r=$c7r; }
+fi
+
 # Catppuccin Mocha (r;g;b)
 BASE="30;30;46"; SURF0="43;43;43"; SURF1="69;71;90"; TEXT="205;214;244"; SUB="166;173;200"
 BLUE="137;180;250"; MAUVE="203;166;247"; GREEN="166;227;161"; YELLOW="249;226;175"

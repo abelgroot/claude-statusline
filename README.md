@@ -14,7 +14,7 @@ cp statusline.sh ~/.claude/statusline.sh && chmod +x ~/.claude/statusline.sh
 ```
 Add to `~/.claude/settings.json`:
 ```json
-"statusLine": { "type": "command", "command": "bash ~/.claude/statusline.sh" }
+"statusLine": { "type": "command", "command": "bash ~/.claude/statusline.sh", "padding": 0 }
 ```
 
 ## tmux

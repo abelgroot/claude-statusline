@@ -141,7 +141,8 @@ build() {
   fi
 }
 
-MARGIN=6
+# columns Claude Code reserves around the status line (its own left indent + right edge)
+MARGIN=4
 if [ "$cols" -le 0 ]; then
   build 0; printf '%s  %s\n' "$left" "$right"; exit 0
 fi

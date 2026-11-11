@@ -16,3 +16,8 @@ Add to `~/.claude/settings.json`:
 ```json
 "statusLine": { "type": "command", "command": "bash ~/.claude/statusline.sh" }
 ```
+
+## tmux
+`tmux.conf` is my tmux config (Catppuccin Mocha, rounded windows). The tmux status bar sits at the top
+(`set -g status-position top`), above the Claude Code pane. Claude's status line and the tmux bar stay separate.
+Install: `cp tmux.conf ~/.tmux.conf` then `prefix + r` to reload (needs tpm + plugins).
